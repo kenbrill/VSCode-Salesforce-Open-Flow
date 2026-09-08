@@ -2,7 +2,7 @@
   "name": "salesforce-open-flow",
   "displayName": "Salesforce Open Flow",
   "description": "Open any Salesforce Flow metadata file (.flow-meta.xml) directly in Flow Builder with one click or keyboard shortcut — no terminal, no typing sf commands.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "wallencreeksoftware",
   "icon": "icon.png",
   "license": "MIT",
@@ -25,7 +25,7 @@
     "sf cli"
   ],
   "activationEvents": [],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -55,17 +55,20 @@
         "salesforceOpenFlow.targetOrg": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Target org username or alias passed to `sf org open --target-org`. Leave empty to use the org marked as default in the Salesforce CLI."
-        },
-        "salesforceOpenFlow.sfPath": {
-          "type": "string",
-          "default": "sf",
-          "markdownDescription": "Path to the `sf` executable, if it is not on the extension host's PATH."
+          "markdownDescription": "Target org username or alias. Leave empty to use the org marked as default in the Salesforce CLI config (project-level config wins over global, same as `sf`)."
         }
       }
     }
   },
   "scripts": {
-    "package": "npx @vscode/vsce package --no-git-tag-version"
+    "build": "esbuild extension.js --bundle --outfile=dist/extension.js --platform=node --format=cjs --external:vscode --minify",
+    "package": "npm run build && npx @vscode/vsce package --no-git-tag-version"
+  },
+  "dependencies": {
+    "@salesforce/core": "^9.1.10",
+    "jsforce": "^3.10.25"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
