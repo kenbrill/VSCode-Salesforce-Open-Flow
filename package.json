@@ -1,0 +1,71 @@
+{
+  "name": "salesforce-open-flow",
+  "displayName": "Salesforce Open Flow",
+  "description": "Open any Salesforce Flow metadata file (.flow-meta.xml) directly in Flow Builder with one click or keyboard shortcut — no terminal, no typing sf commands.",
+  "version": "0.1.0",
+  "publisher": "wallencreeksoftware",
+  "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kenbrill/VSCode-Salesforce-Open-Flow.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Salesforce"
+  ],
+  "keywords": [
+    "salesforce",
+    "flow",
+    "flow builder",
+    "sfdx",
+    "sf cli"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "salesforceOpenFlow.open",
+        "title": "Salesforce: Open Flow in Flow Builder"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "salesforceOpenFlow.open",
+          "when": "resourceExtname == .flow-meta.xml",
+          "group": "2_workspace"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "salesforceOpenFlow.open",
+          "when": "resourceExtname == .flow-meta.xml",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Salesforce Open Flow",
+      "properties": {
+        "salesforceOpenFlow.targetOrg": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Target org username or alias passed to `sf org open --target-org`. Leave empty to use the org marked as default in the Salesforce CLI."
+        },
+        "salesforceOpenFlow.sfPath": {
+          "type": "string",
+          "default": "sf",
+          "markdownDescription": "Path to the `sf` executable, if it is not on the extension host's PATH."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "npx @vscode/vsce package --no-git-tag-version"
+  }
+}
