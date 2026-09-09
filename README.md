@@ -51,6 +51,9 @@ If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** f
 
 ## Release Notes
 
+### 0.3.4
+- Fix the last "Page does not exist" case: VS Code's link-confirmation dialog could still mangle the encoded frontdoor URL when its **Open** button was used (its **Copy** button worked). Flow Builder URLs are now opened directly through the OS (`open`/`start`/`xdg-open`), byte-for-byte — the same path the `sf` CLI uses. No more confirmation dialog either.
+
 ### 0.3.3
 - Fix "Page does not exist" when Flow Builder opened: VS Code's URI handling strips the encoding of the frontdoor URL's `startURL` parameter, breaking the Salesforce redirect. The extension now double-encodes query values so the browser receives exactly the URL Salesforce generated.
 

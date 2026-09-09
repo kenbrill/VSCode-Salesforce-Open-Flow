@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { spawn } = require('child_process');
 
 const FLOW_EXTENSION = '.flow-meta.xml';
 const OUTPUT = () => vscode.window.createOutputChannel('Salesforce Open Flow');
@@ -96,22 +97,33 @@ async function resolveUsername(config, workspaceRoot) {
 }
 
 /**
- * Re-encode each query VALUE one extra level.
+ * Open a URL byte-for-byte via the OS default browser.
  *
- * Why: vscode.Uri round-trips query strings *decoded* (URI.parse decodes %XX, and the
- * serialization path openExternal uses — revive() + toString(true) + encodeURI() — never
- * re-encodes them). The frontdoor URL's startURL param is itself an encoded URL
- * (%2Fbuilder_platform_interaction%2FflowBuilder.app%3FflowId%3D...) — if VS Code strips
- * that encoding, frontdoor.jsp receives a startURL whose embedded '?flowId=' splits the
- * query, and the page 404s ("Page does not exist"). Double-encoding survives the round
- * trip: after VS Code's decode, the server sees exactly the string singleaccess returned.
+ * Why not vscode.env.openExternal: VS Code's URI machinery is lossy for URLs whose
+ * query values are themselves percent-encoded (the frontdoor URL's startURL/otp are).
+ * Even with pre-compensation, VS Code's link-confirmation dialog re-opens the URL
+ * through its opener pipeline again on 'Open' and strips the encoding — but its
+ * 'Copy' preserves it. Handing the string to the OS launcher (the same thing the
+ * `sf` CLI does) skips VS Code's pipeline entirely: the browser receives exactly
+ * the bytes the UI Bridge API returned.
  */
-function encodeForOpenExternal(serverUrl) {
-  const url = new URL(serverUrl);
-  const query = [...url.searchParams.entries()]
-    .map(([k, v]) => k + '=' + encodeURIComponent(encodeURIComponent(v)))
-    .join('&');
-  return url.origin + url.pathname + '?' + query;
+function openInBrowser(rawUrl) {
+  let cmd, args;
+  if (process.platform === 'darwin') {
+    cmd = 'open'; args = [rawUrl];
+  } else if (process.platform === 'win32') {
+    // rundll32 (not `cmd /c start`) — no cmd.exe parsing, so %2F-style sequences survive.
+    cmd = 'rundll32'; args = ['url.dll,FileProtocolHandler', rawUrl];
+  } else {
+    cmd = 'xdg-open'; args = [rawUrl];
+  }
+  const child = spawn(cmd, args, { stdio: 'ignore', detached: true });
+  child.unref();
+  return new Promise((resolve) => {
+    child.once('error', () => resolve(false));
+    child.once('spawn', () => resolve(true));
+    setTimeout(() => resolve(true), 2000); // no spawn event on some platforms
+  });
 }
 
 async function openFlow(uri) {
@@ -183,7 +195,11 @@ async function openFlow(uri) {
     const frontdoorUrl = await org.getFrontDoorUrl(redirect);
 
     output.appendLine(`DurableId: ${durableId}`);
-    vscode.env.openExternal(vscode.Uri.parse(encodeForOpenExternal(frontdoorUrl)));
+    const opened = await openInBrowser(frontdoorUrl);
+    if (!opened) {
+      // Last resort: the old path (can mangle encoded query params; user can use Copy).
+      await vscode.env.openExternal(vscode.Uri.parse(frontdoorUrl));
+    }
     output.appendLine('Flow Builder opened in browser.');
   } catch (err) {
     output.appendLine(`Error: ${err.message}`);
@@ -207,4 +223,5 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = { activate, deactivate };
+// openInBrowser is exported for testing.
+module.exports = { activate, deactivate, openInBrowser };
