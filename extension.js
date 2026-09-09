@@ -71,13 +71,19 @@ function resolveAlias(value) {
 
 /**
  * Resolve org credentials, in order:
- *  1. explicit setting (salesforceOpenFlow.targetOrg)
- *  2. @salesforce/core's config aggregation (project sfdx-project.json / local + global config)
- *  3. direct read of the workspace's .sfdx/sfdx-config.json (legacy project format that
+ *  1. shared setting (wallencreekSf.targetOrg) — contributed identically by every
+ *     Wallencreek Salesforce plugin, so the value is shared across them
+ *  2. this plugin's legacy setting (salesforceOpenFlow.targetOrg)
+ *  3. @salesforce/core's config aggregation (project sfdx-project.json / local + global config)
+ *  4. direct read of the workspace's .sfdx/sfdx-config.json (legacy project format that
  *     core 9.x no longer reads, and whose lookup depends on process cwd in the ext host)
  * Alias values (modern ~/.sf/alias.json AND legacy ~/.sfdx/alias.json) resolve to usernames.
  */
 async function resolveUsername(config, workspaceRoot) {
+  const shared = vscode.workspace.getConfiguration('wallencreekSf').get('targetOrg');
+  if (shared) {
+    return resolveAlias(shared);
+  }
   const explicit = config.get('targetOrg');
   if (explicit) {
     return resolveAlias(explicit);
@@ -160,7 +166,7 @@ async function openFlow(uri) {
         'Log in to Salesforce'
       );
       if (login === 'Log in to Salesforce') {
-        await vscode.commands.executeCommand('salesforceOpenFlow.login');
+        await vscode.commands.executeCommand('wallencreekSf.login');
       }
       return;
     }
@@ -216,6 +222,9 @@ function activate(context) {
       }
       await openFlow(uri);
     }),
+    vscode.commands.registerCommand('wallencreekSf.login', loginWeb),
+    // Old command ID kept as a keybinding/script alias; hidden from the palette so
+    // it never appears next to the shared entry.
     vscode.commands.registerCommand('salesforceOpenFlow.login', loginWeb),
     OUTPUT()
   );

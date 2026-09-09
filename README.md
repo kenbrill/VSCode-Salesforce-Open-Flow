@@ -18,7 +18,7 @@ This extension does the same thing **inside VS Code, in-process**:
 - **Right-click inside an open Flow metadata file** → same command
 - **Command Palette** → *Salesforce: Open Flow in Flow Builder* (uses the active editor)
 - Resolves the Flow's `DurableId` over the REST API, generates a single-use Frontdoor URL via the Salesforce UI Bridge API, and opens Flow Builder in your browser
-- **Built-in org login** — *Salesforce Open Flow: Log in to Org* runs the browser OAuth flow itself; no Salesforce CLI or Extension Pack needed, ever
+- **Built-in org login** — *Salesforce: Log in to Org* runs the browser OAuth flow itself; no Salesforce CLI or Extension Pack needed, ever. The command is shared with other Wallencreek Salesforce plugins: install several and you still get a single login entry.
 - Logs every step to a dedicated **"Salesforce Open Flow"** output panel
 
 ## How it works
@@ -39,7 +39,7 @@ Nothing in the extension shells out to `sf`:
 - **API calls** go straight over HTTPS from the extension host.
 - **Browser handoff** goes through the OS, not VS Code.
 
-If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** from the Command Palette (or press the "Log in to Salesforce" button when the extension offers it). It opens your browser, you approve, and the tokens are stored locally — the login can also set the project/global default org for you.
+If you've never authorized an org, run **Salesforce: Log in to Org** from the Command Palette (or press the "Log in to Salesforce" button when the extension offers it). It opens your browser, you approve, and the tokens are stored locally — the login can also set the project/global default org for you.
 
 ## Requirements
 
@@ -62,6 +62,9 @@ If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** f
 
 ## Release Notes
 
+### 0.3.5
+- The login command is now shared across Wallencreek Salesforce plugins: it moved to the plugin-agnostic **Salesforce: Log in to Org** (`wallencreekSf.login`), contributed identically by the Apex Picklist Autocomplete extension — install both and the Command Palette still shows a single login entry. Org resolution prefers the new shared `wallencreekSf.targetOrg` setting; `salesforceOpenFlow.targetOrg` still works but is deprecated, and the old `salesforceOpenFlow.login` ID remains registered (hidden) for keybindings and scripts.
+
 ### 0.3.4
 - Flow Builder URLs are now opened through the OS browser launcher (`open`/`start`/`xdg-open`) instead of `vscode.env.openExternal`, byte-for-byte — the same path the `sf` CLI uses. This removes the link-confirmation dialog and fixes the last "Page does not exist" case, where the dialog's **Open** button mangled the encoded frontdoor URL even though its **Copy** button worked.
 
@@ -75,7 +78,7 @@ If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** f
 - Fix "Open Flow" failing with a logger transport error when the dependencies were bundled; the extension ships with its dependencies unpacked (the same approach as the official Salesforce extensions). No functional changes.
 
 ### 0.3.0
-- **Built-in org login** — new *Salesforce Open Flow: Log in to Org* command runs the full browser OAuth flow in-process (localhost OAuth listener + Salesforce's built-in connected app). The extension is completely standalone: install it, log in, right-click a flow, done.
+- **Built-in org login** — new *Salesforce: Log in to Org* command runs the full browser OAuth flow in-process (localhost OAuth listener + Salesforce's built-in connected app). The extension is completely standalone: install it, log in, right-click a flow, done.
 - If no org is authorized yet, the "open" command offers a one-click **Log in to Salesforce** button instead of telling you to install the CLI.
 
 ### 0.2.0
