@@ -51,6 +51,9 @@ If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** f
 
 ## Release Notes
 
+### 0.3.1
+- Fix "Open Flow" failing with a logger transport error when the dependencies were bundled; the extension now ships with its dependencies unpacked (the same approach as the official Salesforce extensions). No functional changes.
+
 ### 0.3.0
 - **Built-in org login** — new *Salesforce Open Flow: Log in to Org* command runs the full browser OAuth flow in-process (localhost OAuth listener + Salesforce's built-in connected app). The extension is now completely standalone: install it, log in, right-click a flow, done.
 - If no org is authorized yet, the "open" command now offers a one-click **Log in to Salesforce** button instead of telling you to install the CLI.

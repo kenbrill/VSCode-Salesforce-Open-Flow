@@ -2,7 +2,7 @@
   "name": "salesforce-open-flow",
   "displayName": "Salesforce Open Flow",
   "description": "Open any Salesforce Flow metadata file (.flow-meta.xml) directly in Flow Builder with one click — no terminal, no Salesforce CLI required. Includes built-in org login.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "wallencreeksoftware",
   "icon": "icon.png",
   "license": "MIT",
@@ -25,7 +25,7 @@
     "no cli"
   ],
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./extension.js",
   "contributes": {
     "commands": [
       {
@@ -65,14 +65,11 @@
     }
   },
   "scripts": {
-    "build": "esbuild extension.js --bundle --outfile=dist/extension.js --platform=node --format=cjs --external:vscode --minify",
-    "package": "npm run build && npx @vscode/vsce package --no-git-tag-version"
+    "package": "npx @vscode/vsce package --no-git-tag-version"
   },
   "dependencies": {
     "@salesforce/core": "^9.1.10",
     "jsforce": "^3.10.25"
   },
-  "devDependencies": {
-    "esbuild": "^0.28.2"
-  }
+  "devDependencies": {}
 }
