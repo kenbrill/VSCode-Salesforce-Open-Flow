@@ -145,7 +145,13 @@ async function openFlow(uri) {
 
 function activate(context) {
   context.subscriptions.push(
-    vscode.commands.registerCommand('salesforceOpenFlow.open', openFlow),
+    vscode.commands.registerCommand('salesforceOpenFlow.open', async (uri) => {
+      // Invoked from the Command Palette → no URI argument; use the active editor.
+      if (!uri && vscode.window.activeTextEditor) {
+        uri = vscode.window.activeTextEditor.document.uri;
+      }
+      await openFlow(uri);
+    }),
     vscode.commands.registerCommand('salesforceOpenFlow.login', loginWeb),
     OUTPUT()
   );
