@@ -1,5 +1,7 @@
 const vscode = require('vscode');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 const FLOW_EXTENSION = '.flow-meta.xml';
 const OUTPUT = () => vscode.window.createOutputChannel('Salesforce Open Flow');
@@ -34,7 +36,6 @@ async function loginWeb() {
     const authInfo = await server.authorizeAndSave();
     const username = authInfo.getFields().username;
     output.appendLine(`Logged in as ${username}. Saved to local org list.`);
-
     const makeDefault = await vscode.window.showInformationMessage(
       `Logged in as ${username}. Set as the default org for this project?`,
       'Yes', 'No'
@@ -50,20 +51,67 @@ async function loginWeb() {
 }
 
 /**
- * Resolve org credentials: explicit setting > project default (sfdx-project.json /
- * .sfdx/sfdx-config.json) > global default. Uses @salesforce/core's own config
- * aggregation, so it matches `sf` behavior exactly.
+ * Resolve an org alias to a username, reading BOTH alias files:
+ *  - ~/.sf/alias.json   (modern, written by current sf / @salesforce/core 9+)
+ *  - ~/.sfdx/alias.json (legacy, written by older sfdx — still what many projects use)
+ * A value containing '@' is already a username and passes through untouched.
+ */
+function resolveAlias(value) {
+  if (!value || value.includes('@')) return value;
+  for (const dir of ['.sf', '.sfdx']) {
+    try {
+      const aliases = JSON.parse(fs.readFileSync(path.join(os.homedir(), dir, 'alias.json'), 'utf8'));
+      const resolved = aliases.orgs && aliases.orgs[value];
+      if (resolved) return resolved;
+    } catch (e) { /* file missing or unparseable */ }
+  }
+  return value;
+}
+
+/**
+ * Resolve org credentials, in order:
+ *  1. explicit setting (salesforceOpenFlow.targetOrg)
+ *  2. @salesforce/core's config aggregation (project sfdx-project.json / local + global config)
+ *  3. direct read of the workspace's .sfdx/sfdx-config.json (legacy project format that
+ *     core 9.x no longer reads, and whose lookup depends on process cwd in the ext host)
+ * Alias values (modern ~/.sf/alias.json AND legacy ~/.sfdx/alias.json) resolve to usernames.
  */
 async function resolveUsername(config, workspaceRoot) {
   const explicit = config.get('targetOrg');
   if (explicit) {
-    return explicit;
+    return resolveAlias(explicit);
   }
-  // Mimic `sf`: local project config wins, then global.
   const { ConfigAggregator } = require('@salesforce/core');
   const agg = await ConfigAggregator.create();
-  const local = agg.getInfo('defaultusername');
-  return local && local.value ? local.value : undefined;
+  for (const key of ['target-org', 'defaultusername']) { // modern key first, then deprecated
+    const info = agg.getInfo(key);
+    if (info && info.value) return resolveAlias(info.value);
+  }
+  // Legacy project config: ./.sfdx/sfdx-config.json { "defaultusername": "..." }
+  try {
+    const legacy = JSON.parse(fs.readFileSync(path.join(workspaceRoot, '.sfdx', 'sfdx-config.json'), 'utf8'));
+    if (legacy.defaultusername) return resolveAlias(legacy.defaultusername);
+  } catch (e) { /* no legacy config in this workspace */ }
+  return undefined;
+}
+
+/**
+ * Re-encode each query VALUE one extra level.
+ *
+ * Why: vscode.Uri round-trips query strings *decoded* (URI.parse decodes %XX, and the
+ * serialization path openExternal uses — revive() + toString(true) + encodeURI() — never
+ * re-encodes them). The frontdoor URL's startURL param is itself an encoded URL
+ * (%2Fbuilder_platform_interaction%2FflowBuilder.app%3FflowId%3D...) — if VS Code strips
+ * that encoding, frontdoor.jsp receives a startURL whose embedded '?flowId=' splits the
+ * query, and the page 404s ("Page does not exist"). Double-encoding survives the round
+ * trip: after VS Code's decode, the server sees exactly the string singleaccess returned.
+ */
+function encodeForOpenExternal(serverUrl) {
+  const url = new URL(serverUrl);
+  const query = [...url.searchParams.entries()]
+    .map(([k, v]) => k + '=' + encodeURIComponent(encodeURIComponent(v)))
+    .join('&');
+  return url.origin + url.pathname + '?' + query;
 }
 
 async function openFlow(uri) {
@@ -135,7 +183,7 @@ async function openFlow(uri) {
     const frontdoorUrl = await org.getFrontDoorUrl(redirect);
 
     output.appendLine(`DurableId: ${durableId}`);
-    vscode.env.openExternal(vscode.Uri.parse(frontdoorUrl));
+    vscode.env.openExternal(vscode.Uri.parse(encodeForOpenExternal(frontdoorUrl)));
     output.appendLine('Flow Builder opened in browser.');
   } catch (err) {
     output.appendLine(`Error: ${err.message}`);

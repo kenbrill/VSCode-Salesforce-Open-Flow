@@ -51,6 +51,12 @@ If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** f
 
 ## Release Notes
 
+### 0.3.3
+- Fix "Page does not exist" when Flow Builder opened: VS Code's URI handling strips the encoding of the frontdoor URL's `startURL` parameter, breaking the Salesforce redirect. The extension now double-encodes query values so the browser receives exactly the URL Salesforce generated.
+
+### 0.3.2
+- Fix org resolution for projects using legacy `.sfdx/sfdx-config.json` and legacy aliases (`~/.sfdx/alias.json`) — e.g. a project whose default org is set as an alias like `KBRILL`.
+
 ### 0.3.1
 - Fix "Open Flow" failing with a logger transport error when the dependencies were bundled; the extension now ships with its dependencies unpacked (the same approach as the official Salesforce extensions). No functional changes.
 
