@@ -5,6 +5,51 @@ const FLOW_EXTENSION = '.flow-meta.xml';
 const OUTPUT = () => vscode.window.createOutputChannel('Salesforce Open Flow');
 
 /**
+ * Interactive browser login, entirely in-process (no sf CLI).
+ * Uses @salesforce/core's WebOAuthServer — a localhost OAuth listener on :1717
+ * and Salesforce's built-in connected app, exactly like `sf org login web`.
+ * The resulting tokens are stored in the standard shared auth files (~/.sfdx),
+ * so the sf CLI and other Salesforce tooling see the org too.
+ */
+async function loginWeb() {
+  const output = OUTPUT();
+  output.show(true);
+  const instanceUrl = await vscode.window.showInputBox({
+    prompt: 'Login URL (accept the default for production / most orgs)',
+    value: 'https://login.salesforce.com',
+    ignoreFocusOut: true,
+  });
+  if (!instanceUrl) return;
+
+  output.appendLine(`Starting browser login to ${instanceUrl}…`);
+  try {
+    const core = require('@salesforce/core');
+    const server = await core.WebOAuthServer.create({
+      oauthConfig: { loginUrl: instanceUrl.trim() },
+    });
+    await server.start();
+    vscode.env.openExternal(vscode.Uri.parse(server.getAuthorizationUrl()));
+    output.appendLine('Waiting for authorization in the browser…');
+
+    const authInfo = await server.authorizeAndSave();
+    const username = authInfo.getFields().username;
+    output.appendLine(`Logged in as ${username}. Saved to local org list.`);
+
+    const makeDefault = await vscode.window.showInformationMessage(
+      `Logged in as ${username}. Set as the default org for this project?`,
+      'Yes', 'No'
+    );
+    if (makeDefault === 'Yes') {
+      await authInfo.handleAliasAndDefaultSettings({ setDefault: true });
+      output.appendLine('Set as default org.');
+    }
+  } catch (err) {
+    output.appendLine(`Login failed: ${err.message}`);
+    vscode.window.showErrorMessage(`Salesforce Open Flow login: ${err.message}`);
+  }
+}
+
+/**
  * Resolve org credentials: explicit setting > project default (sfdx-project.json /
  * .sfdx/sfdx-config.json) > global default. Uses @salesforce/core's own config
  * aggregation, so it matches `sf` behavior exactly.
@@ -50,9 +95,13 @@ async function openFlow(uri) {
     const config = vscode.workspace.getConfiguration('salesforceOpenFlow');
     const username = await resolveUsername(config, workspaceRoot);
     if (!username) {
-      vscode.window.showErrorMessage(
-        'No default Salesforce org found. Run "sf org login web" once, or set "Salesforce Open Flow: Target Org".'
+      const login = await vscode.window.showErrorMessage(
+        'No Salesforce org authorized on this machine yet.',
+        'Log in to Salesforce'
       );
+      if (login === 'Log in to Salesforce') {
+        await vscode.commands.executeCommand('salesforceOpenFlow.login');
+      }
       return;
     }
 
@@ -97,6 +146,7 @@ async function openFlow(uri) {
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand('salesforceOpenFlow.open', openFlow),
+    vscode.commands.registerCommand('salesforceOpenFlow.login', loginWeb),
     OUTPUT()
   );
 }

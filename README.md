@@ -2,7 +2,7 @@
 
 Open any Salesforce Flow metadata file directly in **Flow Builder** with one click — no terminal, no typing `sf` commands, **no Salesforce CLI required**.
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Version](https://img.shields.io/badge/version-0.3.0-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## What it does
 
@@ -18,17 +18,18 @@ This extension does the same thing **inside VS Code, in-process**:
 - **Right-click inside an open Flow metadata file** → same command
 - **Command Palette** → *Salesforce: Open Flow in Flow Builder* (uses the active editor)
 - Resolves the Flow's `DurableId` over the REST API, generates a single-use Frontdoor URL via the Salesforce UI Bridge API, and opens Flow Builder in your browser
+- **Built-in org login** — *Salesforce Open Flow: Log in to Org* runs the browser OAuth flow itself; no Salesforce CLI or Extension Pack needed, ever
 - Logs every step to a dedicated **"Salesforce Open Flow"** output panel
 
 ## No CLI required
 
 The extension bundles [`@salesforce/core`](https://www.npmjs.com/package/@salesforce/core) — the same library the Salesforce CLI is built on — so it talks to Salesforce directly:
 
-- Reuses the org credentials you've already authorized with `sf org login` (stored in `~/.sfdx`)
+- Reuses org credentials shared with other Salesforce tooling (stored in `~/.sfdx`) — including orgs you authorized with the CLI
 - Follows the same org-selection rules as the CLI: explicit setting → project default → global default
 - Refreshes expired access tokens automatically using the stored refresh token
 
-If you've never logged in to an org, run `sf org login web` once (or use the Salesforce Extension Pack's "Authorize an Org"). After that, this extension works standalone.
+If you've never authorized an org, run **Salesforce Open Flow: Log in to Org** from the Command Palette (or press the "Log in to Salesforce" button when the extension offers it). It opens your browser, you approve, and the tokens are stored locally — same flow as `sf org login web`, run in-process. The login can also set the project/global default org for you.
 
 ## Requirements
 
@@ -49,6 +50,10 @@ If you've never logged in to an org, run `sf org login web` once (or use the Sal
 - Works for the same metadata types `sf org open --source-file` supports for Flow; ApexPage/FlexiPage support may come later.
 
 ## Release Notes
+
+### 0.3.0
+- **Built-in org login** — new *Salesforce Open Flow: Log in to Org* command runs the full browser OAuth flow in-process (localhost OAuth listener + Salesforce's built-in connected app). The extension is now completely standalone: install it, log in, right-click a flow, done.
+- If no org is authorized yet, the "open" command now offers a one-click **Log in to Salesforce** button instead of telling you to install the CLI.
 
 ### 0.2.0
 - **No more CLI dependency** — talks to Salesforce in-process via the bundled `@salesforce/core`; `sf` no longer needs to be installed or on PATH.

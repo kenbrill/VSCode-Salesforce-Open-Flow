@@ -1,8 +1,8 @@
 {
   "name": "salesforce-open-flow",
   "displayName": "Salesforce Open Flow",
-  "description": "Open any Salesforce Flow metadata file (.flow-meta.xml) directly in Flow Builder with one click or keyboard shortcut — no terminal, no typing sf commands.",
-  "version": "0.2.0",
+  "description": "Open any Salesforce Flow metadata file (.flow-meta.xml) directly in Flow Builder with one click — no terminal, no Salesforce CLI required. Includes built-in org login.",
+  "version": "0.3.0",
   "publisher": "wallencreeksoftware",
   "icon": "icon.png",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "flow",
     "flow builder",
     "sfdx",
-    "sf cli"
+    "no cli"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -31,6 +31,10 @@
       {
         "command": "salesforceOpenFlow.open",
         "title": "Salesforce: Open Flow in Flow Builder"
+      },
+      {
+        "command": "salesforceOpenFlow.login",
+        "title": "Salesforce Open Flow: Log in to Org"
       }
     ],
     "menus": {
@@ -55,7 +59,7 @@
         "salesforceOpenFlow.targetOrg": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Target org username or alias. Leave empty to use the org marked as default in the Salesforce CLI config (project-level config wins over global, same as `sf`)."
+          "markdownDescription": "Target org username or alias. Leave empty to use the org marked as default in the shared org config (project-level config wins over global)."
         }
       }
     }
