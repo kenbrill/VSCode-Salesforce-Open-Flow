@@ -2,7 +2,9 @@
 
 Open any Salesforce Flow metadata file directly in **Flow Builder** with one click — no terminal, no typing `sf` commands, **no Salesforce CLI required**.
 
-![Version](https://img.shields.io/badge/version-0.3.4-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Open Flow demo](https://raw.githubusercontent.com/kenbrill/VSCode-Salesforce-Open-Flow/main/img/demo.gif)
+
+![Version](https://img.shields.io/badge/version-0.3.6-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## What it does
 
@@ -61,6 +63,9 @@ If you've never authorized an org, run **Salesforce: Log in to Org** from the Co
 - Frontdoor URLs are single-use; every open mints a fresh one.
 
 ## Release Notes
+
+### 0.3.6
+- README now shows the demo animation (right-click a flow → Flow Builder opens in the browser).
 
 ### 0.3.5
 - The login command is now shared across Wallencreek Salesforce plugins: it moved to the plugin-agnostic **Salesforce: Log in to Org** (`wallencreekSf.login`), contributed identically by the Apex Picklist Autocomplete extension — install both and the Command Palette still shows a single login entry. Org resolution prefers the new shared `wallencreekSf.targetOrg` setting; `salesforceOpenFlow.targetOrg` still works but is deprecated, and the old `salesforceOpenFlow.login` ID remains registered (hidden) for keybindings and scripts.

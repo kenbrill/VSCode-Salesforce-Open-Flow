@@ -2,7 +2,7 @@
   "name": "salesforce-open-flow",
   "displayName": "Salesforce Open Flow",
   "description": "Open any Salesforce Flow metadata file (.flow-meta.xml) directly in Flow Builder with one click — no terminal, no Salesforce CLI required. Includes built-in org login.",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "publisher": "wallencreeksoftware",
   "icon": "icon.png",
   "license": "MIT",

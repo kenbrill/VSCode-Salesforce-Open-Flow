@@ -1,6 +1,7 @@
 dist/**
 .vscode/**
 .vscode-test/**
+img/**
 .gitignore
 tasks.json
 README.md.gdoc
